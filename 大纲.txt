@@ -1,0 +1,156 @@
+SSR
+
+https://github.com/ykfe/egg-react-ssr
+
+https://nextjs.org/
+
+https://github.com/nuxt/nuxt.js
+
+
+React-dom-server
+https://reactjs.org/docs/react-dom-server.html
+
+
+React-doe
+hydrate
+https://reactjs.org/docs/react-dom.html#hydrate
+
+react-ssr 核心技术分析
+
+
+分享大纲
+
+1，SSR的定义是什么？
+
+SSR的运行模式，页面由服务端直接返回给浏览器，路由为服务端路由，URL的变更会刷新页面，原理与ASP，PHP等传统后端框架类似
+
+
+
+2，SSR的价值和意义是什么？与CSR架构的异同
+
+我们当时做的场景
+C端使用的场景
+SEO
+
+白屏，BFF层
+
+1，服务端渲染对于前端应用的首屏加载速度有着质的提升（特别是在ReactV16.0发布之后），将多次串行http请求简化成一次http请求
+2，对SEO友好
+3，兼容性好
+4，引入nodejs中间层，以node为渲染服务器，不单单是单纯的渲染服务，而是进化为了一个Node.js中间层，可以帮助客户端完成许多在客户端做不到或者很难做到的事情。
+5，服务端可以更早对当前URL做业务逻辑上的判断
+6，对弱交互的网站更合适
+
+
+
+3，介绍前后端同构的概念
+
+
+同构的概念：在服务端和客户端（浏览器）都可以运行的代码。
+链接CSR（客户端渲染）和SSR（服务端渲染）可以
+1，完整的使用两者的优点
+2，规避两者分别的缺点
+
+CSR，页面在JavaScript，CSS等资源文件加载完毕后开始渲染，路由为客户端路由
+Isomorphic，编写的Javascript代码可同时运行在浏览器及Node.js两套环境中，用服务端渲染来提升首屏的加载速度，首屏之后的路由由客户端控制
+
+￼
+
+* 浏览器与服务器复用同一套代码与路由。
+* 编译出来的代码要便于部署，不要太多依赖。
+* 浏览器载入的首屏由服务器渲染完成，以提高加载速度和利于 SEO。
+* 浏览器不再重复做服务器已完成的渲染工作（包括不再重复的请求数据）。
+* 首屏后不再整体刷新，而是通过 ajax 局部更新，带来单页的用户体验。
+* 在交互过程中，随时刷新页面，可以通过 URL 重现当前内容（包括打开弹窗等动作）。
+* 所有的路由跳转 link 回归到原始的\< a href="...">，方便让搜索引擎爬取。
+* JS 拦截所有\< a href="...">的浏览器跳转行为，改用单页方式打开。
+
+
+
+4，介绍react-ssr的技术现状，都有哪些比较有名的框架。
+
+Next, beidou, react-ssr，egg，easyteam
+
+egg+react+ssr
+ykfe
+
+Razzle
+React Server
+Next.js
+Beidou
+Samsung-ssr
+
+5，react-SSR的核心技术解析
+
+react ：reactDomServer
+
+￼
+
+https://crypt.codemancers.com/posts/2016-09-16-react-server-side-rendering
+
+
+If you call ReactDOM.hydrate() on a node that already has this server-rendered markup, React will preserve it and only attach event handlers, allowing you to have a very performant first-load experience.
+
+
+hydrate 方法：
+
+legacyRenderSubtreeIntoContainer
+
+1，生成fiberroot
+2，建立updateQueue
+3，updateContainer => schedule
+
+// Check if there's expired work on this root. Otherwise, render at Sync.
+performSyncWorkOnRoot
+
+completeUnitOfWork =》 completeWork => hydrateInstance => precacheFiberNode, updateFiberProps => diffHydratedProperties => ensureListeningTo，trapClickOnNonInteractiveElement
+
+trapClickOnNonInteractiveElement:
+
+  // Mobile Safari does not fire properly bubble click events on
+  // non-interactive elements, which means delegated click listeners do not
+  // fire. The workaround for this bug involves attaching an empty click
+  // listener on the target node.
+  // http://www.quirksmode.org/blog/archives/2010/09/click_event_del.html
+  // Just set it using the onclick property so that we don't have to manage any
+  // bookkeeping for it. Not sure if we need to clear it when the listener is
+  // removed.
+
+事件绑定到doc上，通过
+
+listenTo
+
+dispatchEventForPluginEventSystem
+
+
+6，完整SSR开发和运维方案的架构图，包括开发，运维，查错，监控，降级（实现思路和时机）* 等
+
+* 高性能的 Node Server. https://github.com/alibaba/beidou/blob/master/packages/beidou-docs/articles/node-memory-leak.md
+* 可靠的 同构渲染服务
+* 可控的 运维成本
+* 可复用的 解决方案
+
+
+* 采用编译后的React版本: 根据Sasha Aickin的博客，React15在Node4、Node6、Node8下，采用编译后的版本性能相比未编译版本分别提升了2.36倍、3倍、3.85倍
+* 模块拆分: 模块拆分有利于并发渲染，目前ICBU店铺装修采用的就是这种方式
+* 模块级别缓存: 页面中某些模块其实是很适合缓存的，比如Lazada详情页中节点数虽然高达3701, 但其实页头部分就占比55.5%，页尾占比3.5%，而页头页尾是常年不变的.
+* 组件级缓存： 最小粒度的缓存单位了，性能提升依赖于缓存的范围和命中率，运用得当，可能带来非常大的性能提升。参考walmartlabs
+* 采用hsf代替http对外提供服务: hsf的网络消耗远低于http, 在店铺同构实践中，改用hsf, java端调用Node端的耗时缩短了一半.
+* 部分模块客户端渲染(对SEO无用的部分): 直接降低SSR部分的复杂度
+* 智能降级: 当流量暴增，接近或超过阈值时，会直接导致服务的RT快速上升。可以实时监测CPU和内存的使用率，超过一定的比例自动降级为客户端渲染，降低服务端压力，CPU和内存恢复常态时，自动切回服务端渲染。
+* 采用Node8: 同样在店铺实践中，采用Node8相比Node6, 渲染时间从28ms降低到了18ms, 提升幅度为36%.
+* 采用最新版React16: facebook官方数据, 在Node8下，React16相比编译后的react15仍有3.8倍提升，相比未编译的React15更是有数量级的提升。
+
+更多性能策略
+其实除了上述应用的策略，还有其它的策略，比如
+* 采用Async, 有数据称性能提升30%, 笔者试了下，未见明显提升。应该是经过了babel的编译，最终没有发挥出Async的优势，这是因为beidou框架在服务端要支持import等ES6的写法以及支持React的JSX语法。其实也非常简单，直接缩小babel的编译范围，在beidou框架中是可以自己定义的。
+* 降低React组件的嵌套层级。试验数据，同样的页面节点数，服务端渲染时间和组件的嵌套层级是线性正相关的。
+* 热点缓存 ...
+
+让nodejs 更快一点 https://github.com/alibaba/beidou/blob/master/packages/beidou-docs/articles/node-performance-optimization.md
+打造高可靠与高性能的React同构解决方案  https://github.com/alibaba/beidou/blob/master/packages/beidou-docs/articles/high-performance-isomorphic-app.md
+
+
+7，发散到实际的应用场景，SSR的使用
+
+CSR + CDN

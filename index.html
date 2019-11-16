@@ -26,9 +26,77 @@
 		<div class="reveal">
 			<div class="slides">
 				<section>
-					<h1>React-SSR 核心技术讲解</h1>
+					<h3>React-ssr 核心技术分析</h3>
+					<p>用户增长技术 姚冀锋</p>
 				</section>
-				<section>Slide 2</section>
+				<section>
+					<h4>自我介绍</h4>
+					<ul>
+						<li>从jquery到react</li>
+						<li>从前到后</li>
+						<li>从全栈到全站</li>
+					</ul>
+				</section>
+				<section>
+					<h4>拆解和定义</h4>
+
+					<section>
+						<p>传统意义上的SSR是什么？</p>
+					</section>
+
+					<section>
+						<p>页面由服务端直接返回给浏览器，路由为服务端路由，URL的变更会刷新页面。</p>
+					</section>
+
+					<section>
+						<p>下面这些方式哪些是“传统的”SSR？</p>
+						<ul>
+							<li>JSP，ASP，PHP数据直出</li>
+							<li>Express(Nodejs)数据直出 </li>
+							<li>SPA（React+router+ajax）</li>
+						</ul>
+					</section>
+
+					<section>
+						<p>目前的SSR技术是什么？</p>
+						<p>编写的Javascript代码可同时运行在浏览器及Node.js两套环境中，
+							用服务端渲染来提升首屏的加载速度，首屏之后的路由由客户端控制。</p>
+					</section>
+
+					<section>
+						<p>一个完整的ssr流程</p>
+						<ul>
+							<li>浏览器与服务器复用同一套代码与路由</li>
+							<li>编译出来的代码要便于部署，不要太多依赖</li>
+							<li>浏览器载入的首屏由服务器渲染完成，以提高加载速度和利于 SEO</li>
+							<li>浏览器不再重复做服务器已完成的渲染工作（包括不再重复的请求数据）</li>
+							<li>首屏后不再整体刷新，而是通过 ajax 局部更新，带来单页的用户体验</li>
+							<li>在交互过程中，随时刷新页面，可以通过 URL 重现当前内容（包括打开弹窗等动作）</li>
+							<li>所有的路由跳转 link 回归到原始的\< a href="...">，方便让搜索引擎爬取</li>
+							<li>JS 拦截所有\< a href="...">的浏览器跳转行为，使用浏览器中的路由</li>
+						</ul>
+					</section>
+				</section>
+
+				<section>
+					<h4>拆解和定义</h4>
+
+					<section>
+						<p>React是什么？</p>
+					</section>
+
+					<section>
+						<ul>
+							<li>用于构建用户界面的 JavaScript 库</li>
+							<li>声明式；组件化；一次学习，随处编写</li>
+							<li>无论你现在正在使用什么技术栈，你都可以随时引入 React 来开发新特性，而不需要重写现有代码。
+								React <span class="fragment highlight-red">还可以</span>使用 <span class="fragment highlight-red">Node</span> 进行服务器渲染，或使用 <span class="fragment highlight-red">React Native</span> 开发原生移动应用。</li>
+						</ul>
+					</section>
+				</section>
+				<section>
+					<section>用 Node 进行服务端渲染的技术</section>
+				</section>
 			</div>
 		</div>
 
@@ -44,7 +112,16 @@
 					{ src: 'plugin/markdown/markdown.js' },
 					{ src: 'plugin/notes/notes.js', async: true },
 					{ src: 'plugin/highlight/highlight.js', async: true }
-				]
+				],
+				// Display the page number of the current slide
+				slideNumber: true,
+
+				// Add the current slide number to the URL hash so that reloading the
+				// page/copying the URL will return you to the same slide
+				hash: true,
+
+				// Push each slide change to the browser history. Implies `hash: true`
+				history: true
 			});
 		</script>
 	</body>
