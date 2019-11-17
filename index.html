@@ -58,29 +58,41 @@
 					</section>
 
 					<section>
-						<p>目前的SSR技术是什么？</p>
-						<p>编写的Javascript代码可同时运行在浏览器及Node.js两套环境中，
-							用服务端渲染来提升首屏的加载速度，首屏之后的路由由客户端控制。</p>
-					</section>
-
-					<section>
-						<p>一个完整的ssr流程</p>
-						<ul>
-							<li>浏览器与服务器复用同一套代码与路由</li>
-							<li>编译出来的代码要便于部署，不要太多依赖</li>
-							<li>浏览器载入的首屏由服务器渲染完成，以提高加载速度和利于 SEO</li>
-							<li>浏览器不再重复做服务器已完成的渲染工作（包括不再重复的请求数据）</li>
-							<li>首屏后不再整体刷新，而是通过 ajax 局部更新，带来单页的用户体验</li>
-							<li>在交互过程中，随时刷新页面，可以通过 URL 重现当前内容（包括打开弹窗等动作）</li>
-							<li>所有的路由跳转 link 回归到原始的\< a href="...">，方便让搜索引擎爬取</li>
-							<li>JS 拦截所有\< a href="...">的浏览器跳转行为，使用浏览器中的路由</li>
-						</ul>
+						<p>现在业内所说的SSR</p>
+						<p>用服务端渲染首屏，首屏之后的路由由客户端控制。</p>
 					</section>
 				</section>
 
 				<section>
-					<h4>拆解和定义</h4>
+					<h4>SSR的价值在哪里？</h4>
 
+					<section>
+						<p>SSR和CSR的比较</p>
+					</section>
+
+					<section>
+						<ul>
+							<li>服务端渲染对于前端应用的首屏加载速度有着质的提升</li>
+							<li>对SEO友好</li>
+							<li>兼容性好</li>
+							<li>引入nodejs中间层，技术赋能</li>
+							<li>服务端可以更早对当前URL做业务逻辑上的判断</li>
+							<li>对弱交互的网站合适</li>
+						</ul>
+					</section>
+
+					<section>
+						<p>ssr会有哪些问题</p>
+						<ul></ul>
+					</section>
+
+					<section>
+						<p>如何判断，我们是否应该使用ssr</p>
+						<ul></ul>
+					</section>
+				</section>
+
+				<section>
 					<section>
 						<p>React是什么？</p>
 					</section>
@@ -95,7 +107,107 @@
 					</section>
 				</section>
 				<section>
-					<section>用 Node 进行服务端渲染的技术</section>
+					<section>Isomorphic，同构技术</section>
+
+					<section>
+						<ul>
+							<li>编写的Javascript代码可同时运行在浏览器及Node.js两套环境中</li>
+							<li>结合好同构技术，可以同时利用SSR和CSR的优点</li>
+							<li>也可以规避SSR和CSR两者的缺点</li>
+						</ul>
+					</section>
+
+					<section>
+						<p>一个完整的ssr流程</p>
+						<ul style="font-size: 24px;">
+							<li>浏览器与服务器复用同一套代码与路由</li>
+							<li>编译出来的代码要便于部署，不要太多依赖</li>
+							<li>浏览器载入的首屏由服务器渲染完成，以提高加载速度和利于 SEO</li>
+							<li>浏览器不再重复做服务器已完成的渲染工作（包括不再重复的请求数据）</li>
+							<li>首屏后不再整体刷新，而是通过 ajax 局部更新，带来单页的用户体验</li>
+							<li>在交互过程中，随时刷新页面，可以通过 URL 重现当前内容（包括打开弹窗等动作）</li>
+							<li>所有的路由跳转 link 回归到原始的\< a href="...">，方便让搜索引擎爬取</li>
+							<li>JS 拦截所有\< a href="...">的浏览器跳转行为，使用浏览器中的路由</li>
+						</ul>
+					</section>
+				</section>
+
+				<section>
+					<section>核心技术</section>
+					<section>
+						<pre><code>
+// React v16.2.0
+import ReactDOMServer from 'react-dom/server';
+
+//把React element 渲染成html字符串
+ReactDOMServer.renderToString(element)
+						</code></pre>
+
+						<pre><code>
+// React v16.2.0
+import ReactDOM from 'react-dom'
+
+//与 render() 相同，但它用于在 ReactDOMServer 渲染的容器中
+//对 HTML 的内容进行 hydrate 操作。React 会尝试在已有标记上
+//绑定事件监听器。
+ReactDOM.hydrate(element, container[, callback])
+						</code></pre>
+					</section>
+
+					<section>
+						Example
+					</section>
+
+					<section>
+						<p>一个核心技术方案到商业化使用的距离</p>
+						<ul>
+							<li>引入node之后，对ES6/7的支持</li>
+							<li>对image和css的处理</li>
+							<li>对构建的支持</li>
+							<li></li>
+						</ul>
+					</section>
+				</section>
+
+				<section>
+					<p>什么场景应该考虑用ssr</p>
+
+					<ul>
+						<li>首屏的加载速度非常重要</li>
+						<li>内容需要登陆之后才可见</li>
+						<li>SEO是否非常重要</li>
+						<li>写视图大于读视图</li>
+					</ul>
+
+				</section>
+
+				<section>
+					<p>使用ssr要考虑的事情</p>
+
+					<ul>
+						<li>在前端框架没有执行完之前，可看不可交互。</li>
+						<li>ReactDOMServer.renderToString是同步方法、在调用过程中，会绑定CPU（属于 CPU 独享型）、会阻塞整个事件循环流程。在renderToString没有执行完之前，服务器是不可能处理其它请求的</li>
+						<li>增加维护成本，node设施和发布成本</li>
+					</ul>
+
+				</section>
+
+				<section>
+					<section>
+						目前的业内技术栈
+					</section>
+				</section>
+
+				<section>
+					<section>
+						SSR的运维
+					</section>
+				</section>
+
+				<section>
+					<section>
+						现实中的使用场景
+					</section>
 				</section>
 			</div>
 		</div>
