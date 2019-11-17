@@ -159,54 +159,100 @@ ReactDOM.hydrate(element, container[, callback])
 					</section>
 
 					<section>
-						<p>一个核心技术方案到商业化使用的距离</p>
+						<p>使用ssr要考虑的事情</p>
+
 						<ul>
-							<li>引入node之后，对ES6/7的支持</li>
-							<li>对image和css的处理</li>
-							<li>对构建的支持</li>
-							<li></li>
+							<li>在前端框架没有执行完之前，可看不可交互。</li>
+							<li>ReactDOMServer.renderToString是同步方法、在调用过程中，会绑定CPU（属于 CPU 独享型）、会阻塞整个事件循环流程。在renderToString没有执行完之前，服务器是不可能处理其它请求的</li>
+							<li>增加维护成本，node设施和发布成本</li>
 						</ul>
+
+					</section>
+
+					<section>
+						<p>什么场景应该考虑用ssr</p>
+
+						<ul>
+							<li>首屏的加载速度非常重要</li>
+							<li>内容需要登陆之后才可见</li>
+							<li>SEO是否非常重要</li>
+							<li>写视图大于读视图</li>
+						</ul>
+
 					</section>
 				</section>
 
 				<section>
-					<p>什么场景应该考虑用ssr</p>
-
+					<p>商业化使用的距离</p>
 					<ul>
-						<li>首屏的加载速度非常重要</li>
-						<li>内容需要登陆之后才可见</li>
-						<li>SEO是否非常重要</li>
-						<li>写视图大于读视图</li>
+						<li>性能瓶颈在哪里，该如何优化？</li>
+						<li>引入node之后，对ES6/7的支持</li>
+						<li>对image和css的处理</li>
+						<li>对构建的支持</li>
+						<li>服务降级</li>
+						<li>监控与报警（全链路监控）</li>
 					</ul>
-
-				</section>
-
-				<section>
-					<p>使用ssr要考虑的事情</p>
-
-					<ul>
-						<li>在前端框架没有执行完之前，可看不可交互。</li>
-						<li>ReactDOMServer.renderToString是同步方法、在调用过程中，会绑定CPU（属于 CPU 独享型）、会阻塞整个事件循环流程。在renderToString没有执行完之前，服务器是不可能处理其它请求的</li>
-						<li>增加维护成本，node设施和发布成本</li>
-					</ul>
-
 				</section>
 
 				<section>
 					<section>
 						目前的业内技术栈
 					</section>
-				</section>
 
-				<section>
 					<section>
-						SSR的运维
+						<table>
+							<tr>
+								<th>名称</th>
+								<th>特点</th>
+							</tr>
+							<tr>
+								<td>Razzle</td>
+								<td>HMR,same CSS setup</td>
+							</tr>
+							<tr>
+								<td>React Server</td>
+								<td>by Redlfin</td>
+							</tr>
+							<tr>
+								<td>Next</td>
+								<td>minimalistic framework for ssr applications</td>
+							</tr>
+							<tr>
+								<td>beidou</td>
+								<td>By alibaba 高并发方案，支持自动路由</td>
+							</tr>
+							<tr>
+								<td>samsung-ssr</td>
+								<td></td>
+							</tr>
+							<tr>
+								<td>ykfe（egg-react-ssr）</td>
+								<td></td>
+							</tr>
+						</table>
 					</section>
 				</section>
 
 				<section>
 					<section>
-						现实中的使用场景
+						举个栗子：现实中的使用场景
+					</section>
+
+					<section>
+						电商运营中心
+
+						<section>
+							<p>特点</p>
+
+							<ul>
+								<p>页面访问量大，地域差距大，静态资源对服务器压力高</p>
+								<p>对首屏的展示速度要求高</p>
+							</ul>
+						</section>
+
+						<p>模板维护系统，维护模板和数据schema</p>
+						<p>内部运营平台，使用schema动态生成表单</p>
+						<p>使用SSR技术集成模板和数据做在线预览，发布至CDN</p>
 					</section>
 				</section>
 			</div>
