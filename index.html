@@ -12,6 +12,20 @@
 
 		<!-- Theme used for syntax highlighting of code -->
 		<link rel="stylesheet" href="lib/css/monokai.css">
+		<style>
+			.left {
+				text-align: left;
+			}
+			.right {
+				text-align: right;
+			}
+			.red {
+				color: #f00;
+			}
+			.f24 {
+				font-size: 24px;
+			}
+		</style>
 
 		<!-- Printing and PDF exports -->
 		<script>
@@ -27,116 +41,268 @@
 			<div class="slides">
 				<section>
 					<h3>React-ssr 核心技术分析</h3>
-					<p>用户增长技术 姚冀锋</p>
+					<p>前端技术组 姚冀锋</p>
 				</section>
-				<section>
+				<!--<section>
 					<h4>自我介绍</h4>
 					<ul>
-						<li>从jquery到react</li>
-						<li>从前到后</li>
-						<li>从全栈到全站</li>
+						<li>减肥</li>
+						<li>养娃</li>
+						<li>挤时间打游戏</li>
+						<li>coding</li>
 					</ul>
-				</section>
+				</section>-->
 				<section>
-					<h4>拆解和定义</h4>
-
 					<section>
-						<p>传统意义上的SSR是什么？</p>
+						<p>SSR是什么？</p>
 					</section>
-
 					<section>
-						<p>页面由服务端直接返回给浏览器，路由为服务端路由，URL的变更会刷新页面。</p>
+						<img src="./images/01.png" alt="">
+						<p class="left">"传统的"SSR：页面由服务端直接返回给浏览器，路由为服务端路由，URL的变更会刷新页面。</p>
 					</section>
 
 					<section>
 						<p>下面这些方式哪些是“传统的”SSR？</p>
 						<ul>
-							<li>JSP，ASP，PHP数据直出</li>
-							<li>Express(Nodejs)数据直出 </li>
-							<li>SPA（React+router+ajax）</li>
+							<li>JSP，ASP，PHP页面直出</li>
+							<li>Express(Nodejs)页面直出 </li>
+							<li>SPA（React+router+ajax）浏览器端渲染</li>
 						</ul>
 					</section>
 
 					<section>
-						<p>现在业内所说的SSR</p>
-						<p>用服务端渲染首屏，首屏之后的路由由客户端控制。</p>
+						<img src="./images/02.png" width="640" alt="">
+						<p class="left">"CSR"指页面在js加载完启用客户端渲染，异步获取数据，路由为客户端路由，URL变更不刷新页面。</p>
+					</section>
+
+					<section>
+						<img src="./images/03.png" width="640" alt="">
+						<p class="left">现在业内所说的SSR，用服务端渲染首屏，首屏之后的路由由客户端控制。</p>
 					</section>
 				</section>
 
 				<section>
-					<h4>SSR的价值在哪里？</h4>
 
 					<section>
-						<p>SSR和CSR的比较</p>
+						<h4>SSR的价值在哪里？</h4>
 					</section>
 
 					<section>
 						<ul>
-							<li>服务端渲染对于前端应用的首屏加载速度有着质的提升</li>
+							<li>提升首屏加载速度</li>
 							<li>对SEO友好</li>
-							<li>兼容性好</li>
 							<li>引入nodejs中间层，技术赋能</li>
-							<li>服务端可以更早对当前URL做业务逻辑上的判断</li>
-							<li>对弱交互的网站合适</li>
+							<li>对弱网环境下的可读性场景非常适用</li>
+						</ul>
+					</section>
+
+					<section class="left">
+						<h3>实验： SSR VS CSR</h3>
+						<div class="f24">
+							<p>机器配置：MacBook（2.6 GHz 六核Intel Core i7 16 GB 2400 MHz DDR4）</p>
+							<p>软件环境：<span>React(16.11.0)</span>，<span>nodejs(12.13.1)</span>，<span>chrome(78.0.3904.97) 在网络面板中禁用缓存</span></p>
+							<p>样本节点：5000个节点的页面渲染</p>
+						</div>
+					</section>
+
+					<section>
+						<img src="./images/19.png" width="720" alt="">
+					</section>
+
+					<section class="left f24">
+						<img src="./images/18.png" width="720" alt="">
+						<p>网络传输资源对比</p>
+						<p>SSR:
+							3 requests (index.html, vendor.js, main.js) <br>
+							～600 KB transferred
+						</p>
+						<p>
+							CSR:
+							4 requests (index.html, vendor.js, main.js, cells.json) <br>
+							～400 KB transferred
+						</p>
+					</section>
+
+					<section class="f24 left">
+						<p>在Slow 3G场景下复盘过程：CSR</p>
+						<img src="./images/20.png" alt="">
+					</section>
+
+					<section class="f24 left">
+						<p>在Slow 3G场景下复盘过程：SSR</p>
+						<img src="./images/21.png" alt="">
+					</section>
+
+					<section>
+						<p class="f24 left">在前端框架没有执行完之前，可看不可交互。<span class="red">可提升弱网环境下的读视图！</span></p>
+					</section>
+
+					<!--<section>
+						<h3>code</h3>
+						<pre><code>
+import React from 'react'
+import Hello from './Hello'
+import Cell from './Cell'
+import axios from 'axios';
+
+class Client extends React.Component {
+
+    constructor(props) {
+        super(props);
+        this.state = {
+            cells: []
+        };
+    }
+
+    componentDidMount() {
+        if (this.props.isClient) {
+            axios({
+                method: 'get',
+                url: '/api/cells'
+            })
+                .then(response => {
+                    const {data} = response;
+                    this.setState({
+                        cells: data
+                    });
+                });
+        }
+    }
+
+    render() {
+        const {name} = this.props;
+        let cells;
+
+        if (this.props.isClient) {
+            cells = this.state.cells;
+        } else {
+            cells = this.props.cells;
+        }
+
+        return (
+            <div>
+                <Hello name={name}></Hello>
+                <div className="cells">
+                    {cells.map((cell, index) => <Cell key={index} cell={cell}></Cell>)}
+                </div>
+            </div>
+        );
+    }
+}
+
+export default Client;
+
+						</code></pre>
+					</section>-->
+
+					<!--<section>
+						<p>SSR performance 截图</p>
+						<p class="f24">首屏时间235.5ms</p>
+						<img src="./images/04.png" width="640" alt="">
+					</section>
+
+					<section>
+						<p>SSR performance 截图 (fast 3G)</p>
+						<p class="f24">首屏时间976.9ms</p>
+						<img src="./images/08.png" width="640" alt="">
+					</section>
+
+					<section>
+						<p>SSR performance 截图 (slow 3G)</p>
+						<p class="f24">首屏时间7284.8ms</p>
+						<img src="./images/09.png" width="640" alt="">
+					</section>
+
+					<section>
+						<p>CSR performance 截图</p>
+						<p class="f24">首屏时间586.2ms</p>
+						<img src="./images/05.png" width="640" alt="">
+					</section>
+
+					<section>
+						<p>CSR performance 截图 (fast 3G)</p>
+						<p class="f24">首屏时间2910.7ms</p>
+						<img src="./images/10.png" width="1280" alt="">
+					</section>
+
+					<section>
+						<p>CSR performance 截图 (slow 3G)</p>
+						<p class="f24">首屏时间 18060.3 ms</p>
+						<img src="./images/11.png" width="1280" alt="">
+					</section>-->
+
+					<section>
+						<p>对SEO的支持</p>
+						<div class="left f24">
+							<p>内容：搜索引擎与 SEO 行为间是一种良性的共生关系，比如很多优质的网站是用 Flash 或者 <span class="red">Ajax</span> 做的，搜索引擎就无法很好的爬取和索引。 </p>
+							<p>跳转链接：建议使用文字而不是flash、图片、Javascript等来显示重要的内容或链接，搜索引擎暂时无法识别Flash、图片、Javascript中的内容，这部分内容无法搜索到；仅在flash、Javascript中包含链接指向的网页，百度可能无法收录。</p>
+							<p class="right">-- 《百度搜索引擎优化指南 2.0》</p>
+						</div>
+					</section>
+
+					<section>
+						<p>SEO支持：SSR VS CSR</p>
+						<img src="./images/22.png" width="720" alt="">
+					</section>
+
+					<section>
+						<p>使用CSR从服务端返回的html源码</p>
+						<img src="./images/24.png" width="720" alt="">
+					</section>
+
+					<section>
+						<p>使用SSR从服务端返回的html源码</p>
+						<img src="./images/23.png" width="720" alt="">
+					</section>
+
+					<section>
+						<p class="f24">需要做SEO的项目，<span class="red">可以使用基于SSR的技术方案。</span></p>
+					</section>
+
+					<section class="left">
+						<p>思考下，哪些场景适合用SSR来做</p>
+						<ul class="f24 left">
+							<li>社区：segmentfault，stackoverflow<span class="red">有强烈SEO需求</span></li>
+							<li>需要登录才能进的社交软件/工具：twitter，email</li>
+							<li>高频使用的新闻网站，js可被<span class="red">缓存</span></li>
+							<li>低频使用的活动页面，js很难被缓存</li>
+							<li><span class="red">弱网环境</span>下的推广页面（地下车库，电梯，人口密集的超市，酒吧）</li>
 						</ul>
 					</section>
 
 					<section>
-						<p>ssr会有哪些问题</p>
-						<ul></ul>
-					</section>
-
-					<section>
-						<p>如何判断，我们是否应该使用ssr</p>
-						<ul></ul>
+						<p>为什么SSR这种很早就有的技术，现在重出江湖？</p>
 					</section>
 				</section>
 
 				<section>
-					<section>
-						<p>React是什么？</p>
-					</section>
+					<section>React-ssr 核心技术</section>
 
 					<section>
-						<ul>
-							<li>用于构建用户界面的 JavaScript 库</li>
-							<li>声明式；组件化；一次学习，随处编写</li>
-							<li>无论你现在正在使用什么技术栈，你都可以随时引入 React 来开发新特性，而不需要重写现有代码。
-								React <span class="fragment highlight-red">还可以</span>使用 <span class="fragment highlight-red">Node</span> 进行服务器渲染，或使用 <span class="fragment highlight-red">React Native</span> 开发原生移动应用。</li>
-						</ul>
-					</section>
-				</section>
-				<section>
-					<section>Isomorphic，同构技术</section>
-
-					<section>
-						<ul>
-							<li>编写的Javascript代码可同时运行在浏览器及Node.js两套环境中</li>
-							<li>结合好同构技术，可以同时利用SSR和CSR的优点</li>
-							<li>也可以规避SSR和CSR两者的缺点</li>
-						</ul>
+						<h3>Isomorphic 同构</h3>
+						<p class="f24">编写的Javascript代码可同时运行在浏览器及Node.js两套环境中</p>
 					</section>
 
 					<section>
 						<p>一个完整的ssr流程</p>
-						<ul style="font-size: 24px;">
+						<ul class="f24">
 							<li>浏览器与服务器复用同一套代码与路由</li>
-							<li>编译出来的代码要便于部署，不要太多依赖</li>
 							<li>浏览器载入的首屏由服务器渲染完成，以提高加载速度和利于 SEO</li>
 							<li>浏览器不再重复做服务器已完成的渲染工作（包括不再重复的请求数据）</li>
 							<li>首屏后不再整体刷新，而是通过 ajax 局部更新，带来单页的用户体验</li>
 							<li>在交互过程中，随时刷新页面，可以通过 URL 重现当前内容（包括打开弹窗等动作）</li>
-							<li>所有的路由跳转 link 回归到原始的\< a href="...">，方便让搜索引擎爬取</li>
-							<li>JS 拦截所有\< a href="...">的浏览器跳转行为，使用浏览器中的路由</li>
+							<li>所有的路由跳转 link 回归到原始的&lt;a href="..."&gt;，方便让搜索引擎爬取</li>
+							<li>JS 拦截所有&lt;a href="..."&gt;的浏览器跳转行为，使用浏览器中的路由</li>
 						</ul>
 					</section>
-				</section>
 
-				<section>
-					<section>核心技术</section>
 					<section>
+						<img src="./images/12.png" alt="">
+					</section>
+
+					<section>
+						<h3>关键方法</h3>
 						<pre><code>
-// React v16.2.0
 import ReactDOMServer from 'react-dom/server';
 
 //把React element 渲染成html字符串
@@ -144,7 +310,6 @@ ReactDOMServer.renderToString(element)
 						</code></pre>
 
 						<pre><code>
-// React v16.2.0
 import ReactDOM from 'react-dom'
 
 //与 render() 相同，但它用于在 ReactDOMServer 渲染的容器中
@@ -155,43 +320,188 @@ ReactDOM.hydrate(element, container[, callback])
 					</section>
 
 					<section>
-						Example
+						<p>SSR生命周期和CSR的不同</p>
+						<table class="f24">
+							<tr>
+								<th>生命周期/是否执行</th>
+								<th>SSR</th>
+								<th>CSR</th>
+							</tr>
+							<tr>
+								<td>constructor</td>
+								<td>true</td>
+								<td>true</td>
+							</tr>
+							<tr>
+								<td>getDerivedStateFromProps</td>
+								<td>true</td>
+								<td>true</td>
+							</tr>
+							<tr>
+								<td>render</td>
+								<td>true</td>
+								<td>true</td>
+							</tr>
+							<tr>
+								<td>componentDidMount</td>
+								<td><span class="red">false</span></td>
+								<td>true</td>
+							</tr>
+							<tr>
+								<td>shouldComponentUpdate</td>
+								<td><span class="red">false</span></td>
+								<td>true</td>
+							</tr>
+							<tr>
+								<td>getSnapshotBeforeUpdate</td>
+								<td><span class="red">false</span></td>
+								<td>true</td>
+							</tr>
+							<tr>
+								<td>componentDidUpdate</td>
+								<td><span class="red">false</span></td>
+								<td>true</td>
+							</tr>
+							<tr>
+								<td>componentWillUnmount</td>
+								<td><span class="red">false</span></td>
+								<td>true</td>
+							</tr>
+
+						</table>
 					</section>
 
 					<section>
-						<p>使用ssr要考虑的事情</p>
-
-						<ul>
-							<li>在前端框架没有执行完之前，可看不可交互。</li>
-							<li>ReactDOMServer.renderToString是同步方法、在调用过程中，会绑定CPU（属于 CPU 独享型）、会阻塞整个事件循环流程。在renderToString没有执行完之前，服务器是不可能处理其它请求的</li>
-							<li>增加维护成本，node设施和发布成本</li>
-						</ul>
-
+						<p>SSR中将数据传入组件</p>
+						<pre><code>
+axios({
+	method: 'get',
+	url: URL
+})
+.then(response => {
+	const {data} = response;
+	const component = ReactDOMServer.renderToString(
+		&lt;Client name={name} cells={data} isClient={false}/&gt;
+	);
+//...
+						</code></pre>
 					</section>
 
 					<section>
-						<p>什么场景应该考虑用ssr</p>
+						<p>SSR中将数据写入页面，作为CSR的初始数据</p>
+						<pre><code>
+&lt;script&gt;window.__INITIAL__DATA__ = ${JSON.stringify({name, cells: data})}&lt;/script&gt;
 
-						<ul>
-							<li>首屏的加载速度非常重要</li>
-							<li>内容需要登陆之后才可见</li>
-							<li>SEO是否非常重要</li>
-							<li>写视图大于读视图</li>
-						</ul>
-
+						</code></pre>
 					</section>
+
+					<section>
+						<p>CSR中使用预置数据，进行初始化</p>
+						<pre><code>
+ReactDOM.hydrate(
+    &lt;Client name={window.__INITIAL__DATA__.name} cells={window.__INITIAL__DATA__.cells} isClient={true}/&gt;,
+    document.getElementById('root')
+);
+						</code></pre>
+					</section>
+
+					<section>
+						<p>更加优雅的方式，是在组件中定义方法</p>
+						<pre><code>
+class Client extends React.Component {
+	//...
+	async asyncData (context) {
+	  const {data} = await axios({
+		method: 'get',
+		url: URL
+	  });
+
+	  return data;
+	}
+
+	//...
+}						</code></pre>
+					</section>
+
+					<section>
+						<p>服务端渲染的时候执行该方法进行数据的注入</p>
+						<pre><code>
+const ActiveComponent = getComponent(Routes, ctx.path)
+const serverData = ActiveComponent.asyncData ?
+	await ActiveComponent.asyncData(ctx) : {}
+const component = ReactDOMServer.renderToString(
+	&lt;ActiveComponent {...serverData}/&gt;
+);
+
+  				</code></pre>
+					</section>
+
+					<section>
+						<p>为啥不用React自己的生命周期钩子？</p>
+						<img src="./images/13.png" width="720" alt="">
+					</section>
+
+					<section>
+						<p>StaticRouter VS BrowserRouter</p>
+						<div class="left f24">
+							<p>StaticRouter是无状态的路由，适合服务端渲染使用。使用context，判断跳转。</p>
+							<p>BrowserRouter是有状态的路由，使用html5 history API，在URL的变化时，同步UI的渲染。</p>
+						</div>
+					</section>
+
 				</section>
 
 				<section>
-					<p>商业化使用的距离</p>
-					<ul>
-						<li>性能瓶颈在哪里，该如何优化？</li>
-						<li>引入node之后，对ES6/7的支持</li>
-						<li>对image和css的处理</li>
-						<li>对构建的支持</li>
-						<li>服务降级</li>
-						<li>监控与报警（全链路监控）</li>
-					</ul>
+					<section>性能瓶颈在哪里，该如何优化？</section>
+
+					<section class="left">
+						<h3>实验: SSR VS API 服务器压力测试</h3>
+						<div class="f24">
+							<p>机器配置：MacBook（2.6 GHz 六核Intel Core i7 16 GB 2400 MHz DDR4）</p>
+							<p>软件环境：<span>React(16.11.0)</span>，<span>nodejs(12.13.1)</span>，<span>autocannon (4.4.0)</span></p>
+							<p>样本：[1000, 2000, 3000, 5000]个节点的页面渲染，和相同数据的API接口返回</p>
+							<p>方法：并发的数量100，请求5s。观测qps和服务器延迟</p>
+						</div>
+					</section>
+
+					<section>
+						<p>QPS</p>
+
+						<img src="./images/15.png" width="720" alt="">
+					</section>
+
+					<section>
+						<p>服务器延迟(ms)</p>
+
+						<img src="./images/16.png" width="720" alt="">
+					</section>
+
+					<section>
+						<p>使用stream</p>
+
+						<img src="./images/25.png" width="720" alt="">
+						<p class="left f24">qps平均54.2，提高<span class="red">35</span>倍，服务器延迟平均1532，降低<span class="red">14%</span>。</p>
+
+					</section>
+
+					<section>
+						<p>使用react-component-caching之后的效果</p>
+
+						<img src="./images/17.png" width="720" alt="">
+						<p class="left f24">qps平均92.2 提高<span class="red">56</span>倍，服务器延迟平均970.28，降低<span class="red">46%</span>。</p>
+					</section>
+
+					<section>
+						<p class="left">静态化：<br/>将动态生成的网页静态化，生成HTML文件。</p>
+					</section>
+
+					<section>
+						<p>使用静态化之后的效果</p>
+
+						<img src="./images/26.png" width="720" alt="">
+						<p class="left f24">qps平均1347 提高<span class="red">～900</span>倍，服务器延迟平均73，降低<span class="red">96%</span>。</p>
+					</section>
+
 				</section>
 
 				<section>
@@ -200,36 +510,40 @@ ReactDOM.hydrate(element, container[, callback])
 					</section>
 
 					<section>
-						<table>
+						<table class="f24">
 							<tr>
 								<th>名称</th>
 								<th>特点</th>
-							</tr>
-							<tr>
-								<td>Razzle</td>
-								<td>HMR,same CSS setup</td>
-							</tr>
-							<tr>
-								<td>React Server</td>
-								<td>by Redlfin</td>
+								<th>github star</th>
 							</tr>
 							<tr>
 								<td>Next</td>
 								<td>minimalistic framework for ssr applications</td>
+								<td>42.6k</td>
+							</tr>
+							<tr>
+								<td>Razzle</td>
+								<td>HMR,same CSS setup</td>
+								<td>8.2k</td>
+							</tr>
+							<tr>
+								<td>React Server</td>
+								<td>by Redlfin</td>
+								<td>3.9k</td>
 							</tr>
 							<tr>
 								<td>beidou</td>
 								<td>By alibaba 高并发方案，支持自动路由</td>
-							</tr>
-							<tr>
-								<td>samsung-ssr</td>
-								<td></td>
+								<td>2.5k</td>
 							</tr>
 							<tr>
 								<td>ykfe（egg-react-ssr）</td>
-								<td></td>
+								<td>Egg + React + SSR 应用骨架</td>
+								<td>674</td>
 							</tr>
 						</table>
+
+						<p class="right f24">star统计时间：2019年11月22日</p>
 					</section>
 				</section>
 
@@ -238,22 +552,33 @@ ReactDOM.hydrate(element, container[, callback])
 						举个栗子：现实中的使用场景
 					</section>
 
-					<section>
-						电商运营中心
+					<section class="f24">
+						<p>电商活动页面投放系统</p>
 
-						<section>
-							<p>特点</p>
-
-							<ul>
-								<p>页面访问量大，地域差距大，静态资源对服务器压力高</p>
-								<p>对首屏的展示速度要求高</p>
-							</ul>
-						</section>
-
-						<p>模板维护系统，维护模板和数据schema</p>
-						<p>内部运营平台，使用schema动态生成表单</p>
-						<p>使用SSR技术集成模板和数据做在线预览，发布至CDN</p>
+						<p class="left">场景：</p>
+						<div class="left">
+							<p>页面访问量大，地域差距大</p>
+							<p>对首屏的展示速度要求高</p>
+							<p>低频使用，资源缓存命中率低</p>
+							<p>存在弱网环境的投放</p>
+						</div>
 					</section>
+
+					<section class="f24">
+						<div class="left">
+							<p>模板维护系统，维护模板和数据schema</p>
+							<p>内部运营平台，使用schema动态生成表单，运营同学使用该系统录入活动数据。</p>
+							<p>使用SSR静态化技术并将发布至CDN</p>
+							<p>动态化跟用户相关的内容</p>
+						</div>
+					</section>
+
+					<section>
+						<img src="./images/30.png" width="720" alt="">
+					</section>
+				</section>
+				<section>
+					Thanks !~
 				</section>
 			</div>
 		</div>
